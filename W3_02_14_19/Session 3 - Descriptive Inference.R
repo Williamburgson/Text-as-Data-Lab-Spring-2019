@@ -129,7 +129,8 @@ k * (Tee)^b
 
 M
 
-# Let's think about why (what types of texts are these?)
+# Let's think about why (what types of texts are these?) 
+# over estimated, tune down the parameters
 
 # New parameters
 
@@ -151,6 +152,7 @@ plot(log10(1:100), log10(topfeatures(inaug_dfm, 100)),
 
 # Fits a linear regression to check if slope is approx -1.0
 regression <- lm(log10(topfeatures(inaug_dfm, 100)) ~ log10(1:100))
+# the function is linear in the log space
 
 # Adds the fitted line from regression to the plot
 abline(regression, col = "red")
@@ -161,7 +163,7 @@ confint(regression)
 # Provides R-squared, F-test, and cofficient estimates from regression
 summary(regression)
 
-## Stopwords: do they affect Zipf's law?
+## Stopwords: do they affect Zipf's law?:    -Yes
 
 mydfm <- dfm(data_corpus_inaugural, remove=stopwords("english"))
 
@@ -260,7 +262,8 @@ textstat_simil(several_inaug_dfm, "2009-Obama", margin = "documents", method = "
 rm(list = ls())
 # 7.1 Project Gutenberg: http://www.gutenberg.org/wiki/Main_Page
 # collection of (machine readable) novels and other texts + they have an R package!
-#install.packages("gutenbergr")
+# install.packages("gutenbergr")
+# install.packages("tidyr")
 # for more info refer to: https://cran.r-project.org/web/packages/gutenbergr/vignettes/intro.html
 library(gutenbergr)
 library(dplyr)
@@ -270,13 +273,13 @@ gutenberg_works()
 gutenberg_works() %>% filter(author == "Austen, Jane")
 
 # download "Emma"
-emma <- gutenberg_download(gutenberg_id = 158)
-#emma <- gutenberg_download(jane_austen$gutenberg_id[jane_austen$title == "Emma"], meta_fields = "title")  # add other meta information
+#emma <- gutenberg_download(jane_austen$gutenberg_id[jane_austen$title == "Emma"])
+emma <- gutenberg_download(jane_austen$gutenberg_id[jane_austen$title == "Emma"], meta_fields = "title")  # add other meta information
 
 # 7.2 stylest package: estimate speaker (author) style distinctiveness (vis-a-vis other authors)
 # see vignette: https://github.com/leslie-huang/stylest/blob/master/vignettes/stylest-vignette.md
 # early draft version of paper using this package: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3235506
-#install.packages("stylest")
+# install.packages("stylest")
 # source for this code: package vignette
 library(stylest)
 
@@ -324,6 +327,7 @@ pred$log_probs
 #-----------------------------
 # motivation: flexibly measure the "sophistication" (ease of understanding) of political communication 
 # see paper: https://www.nyu.edu/projects/spirling/documents/BMS_complex.pdf
-#install.packages("sophistication")
+# install.packages("sophistication")
 # see vignette: https://github.com/kbenoit/sophistication
 # key insight: use crowdsourcing
+

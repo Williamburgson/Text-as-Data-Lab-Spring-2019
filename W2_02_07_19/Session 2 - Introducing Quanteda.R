@@ -15,12 +15,15 @@
 rm(list = ls())
 
 # Set working directory
-#setwd("/Users/pedrorodriguez/Drobox/GitHub/Text-as-Data-Lab-Spring-2019/W2_02_07_19/")
+# setwd("/Users/pedrorodriguez/Drobox/GitHub/Text-as-Data-Lab-Spring-2019/W2_02_07_19/")
 
 # 1.2 Installing quanteda
 
 # Install the latest stable version of quanteda from CRAN
 #install.packages("quanteda") # run this if you don't have quanteda already installed
+#install.packages("dplyr")
+#install.packages("xtable")
+#install.packages("devtools")
 
 library(quanteda)
 library(ggplot2)
@@ -33,10 +36,10 @@ library(dplyr)
 
 # Install the package "devtools" which is used to install packages directly from Github
 # install.packages("devtools")
-#library("devtools")
+library("devtools")
 
 # Use devtools to install some sample data
-#devtools::install_github("quanteda/quanteda.corpora")
+devtools::install_github("quanteda/quanteda.corpora")
 
 # Load it into our environment
 library(quanteda.corpora)
@@ -85,7 +88,7 @@ packageVersion("quanteda")
 # other popular text package with similar features: tm
 
 # 1.1 load the State of the Union (SOTU) corpus and look at a summary ---------------------
-#data("sotu", package = "quanteda.corpora")
+data("sotu", package = "quanteda.corpora")
 sotu <- data_corpus_sotu
 
 # a corpus consists of: (1) documents: text + doc level data (2) corpus metadata (3) extras (settings)
@@ -109,7 +112,7 @@ summary(corpus_subset(sotu, President == "Trump"))
 trump_sotu <- corpus_subset(sotu, President == "Trump")
 
 # key words in context (KWIC)
-kwic_america <- kwic(trump_sotu, pattern = "america", valuetype = "regex", window = 6)
+kwic_america <- kwic(trump_sotu, pattern = "america", valuetype = "regex", window = 6) #includes american and americas etc
 kwic_america <- kwic(trump_sotu, pattern = "america")
 
 # keep only the text of the the 2018 SOTU
@@ -124,38 +127,39 @@ trump_2018_text <- trump_sotu[2]
 
 ## 2.1 Tokenizing text ---------------------
 ?tokens
-tokenized_speech <- tokens(trump_2018_text)
+tokenized_speech <- tokens(trump_2018_text) # same as string spliting (by whitespace)
 head(unname(unlist(tokenized_speech)), 20)
 
 # alternative using only base R
 tokenized_speech <- strsplit(trump_2018_text, " ")
 
 # remove punctuation when tokenizing
-tokenized_speech <- tokens(trump_2018_text, remove_punct = TRUE)
+tokenized_speech <- tokens(trump_2018_text, remove_punct = TRUE) # exlude punctuations
 head(unname(unlist(tokenized_speech)), 20)
 
 ## 2.2 Stemming ---------------------
 # SnowballC stemmer is based on the Porter stemmer (varies by language, english is default)
+#       stemming is a function of the language
 ?tokens_wordstem
 stemmed_speech <- tokens_wordstem(tokenized_speech)  # language is an argument
-head(unname(unlist(stemmed_speech)), 20)
+head(unname(unlist(stemmed_speech)), 20) # number of types is reduced
 
 ## 2.3 Ngrams ---------------------
-tokenized_speech_ngrams <- tokens(trump_2018_text, remove_punct = TRUE, ngrams = c(1L, 2L))
+tokenized_speech_ngrams <- tokens(trump_2018_text, remove_punct = TRUE, ngrams = c(1L,2L))
+# produce both unigrams and bigrams, c(1,2) is a vector
 head(unname(unlist(tokenized_speech_ngrams)), 20)
 tail(unname(unlist(tokenized_speech_ngrams)), 20)
 
 ## Types vs. Tokens
 ntoken(trump_2018_text)
 ntype(trump_2018_text)
-tokens(trump_2018_text) %>% unlist() %>% unique() %>% length()
+tokens(trump_2018_text) %>% unlist() %>% unique() %>% length() # type is the collectio of unique tokens
 
 #-----------------------------
 # 3 DOCUMENT FEATURE MATRIX (~ DTM)
 #-----------------------------
 
 # WHAT'S THE POINT? 42
-# DOCUMENTS AS DISTRIBUTIONS
 
 ## 3.1 Creating a DFM ---------------------
 # input can be a document, corpus, etc
@@ -212,28 +216,32 @@ textplot_wordcloud(trump_2018_dfm_2, max_words = 100)
 # 4 WEIGHTED DOCUMENT FEATURE MATRIX
 #-----------------------------
 # WHAT ARE WE WEIGHTING?
+# - change the weights of dimensions thus the distances between the documents 
 
 # Now we will create a DFM of all the SOTU speeches
 full_dfm <- dfm(sotu, remove = stopwords("english"), remove_punct = TRUE)
-full_dfm[, 1:10]  # notice sparsity
-topfeatures(full_dfm)
-topfeatures(full_dfm[nrow(full_dfm),])
+full_dfm[, 1:10]  # notice sparsity - sparsity: percentage of zeros
+topfeatures(full_dfm) # all documents
+topfeatures(full_dfm[nrow(full_dfm),]) # for the last document(trump)
 
 # 4.1 tfidf - Frequency weighting
 weighted_dfm <- dfm_tfidf(full_dfm) # uses the absolute frequency of terms in each document
 topfeatures(weighted_dfm)
-topfeatures(weighted_dfm[nrow(weighted_dfm),])
+topfeatures(weighted_dfm[nrow(weighted_dfm),]) # features that are frequent in trumps speech but not in the other documents
 
 # 4.2 tfidf - Relative frequency weighting
 ?dfm_tfidf
 normalized <- dfm_tfidf(full_dfm, scheme_tf = "prop") # Uses feature proportions within documents: divdes each term by the total count of features in the document
 topfeatures(normalized)
-topfeatures(normalized[nrow(normalized),])
+topfeatures(normalized[nrow(normalized),]) 
 
 #-----------------------------
 # 5 COLLOCATIONS
 #-----------------------------
 # bigrams
+# liklihood of two words (bigram) forms a singluar phrase
+# depends on the lambda scores 
+#   - how often they appear together
 head(textstat_collocations(trump_2018_text))
 textstat_collocations(trump_2018_text) %>% arrange(-lambda) %>% slice(1:5)
 
@@ -251,15 +259,18 @@ head(textstat_collocations(trump_2018_text, size = 3))
 # cheatsheet for regex: https://www.rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf
 
 # grep
+# the documents in which the indicated expression appears
 s_index <- grep(" s ", texts(sotu))
 head(s_index)
 
 # grepl
+# boolean versio of grep
 s_index <- grepl(" s ", texts(sotu))
 table(s_index)
 
 # grepl
-thank_index <- grepl("^Thank", texts(sotu))
+thank_index <- grepl("^Thank", texts(sotu)) # with regex: begin with Thank
+# thank_index <- grepl("$Thank", texts(sotu)) # end with Thank
 table(thank_index)
 
 # this returns every speech that contains " s " -- JUST THE LETTER S BY ITSELF
@@ -268,8 +279,8 @@ texts_with_s <- grep(" s ", texts(sotu), value = TRUE)
 # Here we create a vector of documents with " s " removed
 texts_without_s <- gsub(" s ", "",  sotu)
 
-# ALWAYS TEST FIRST
-gsub(" s ", " ",  "hello how s are you")
+# ALWAYS TEST FIRST on sentences before applying to the whole set
+gsub(" s ", "",  "hello how s are you")
 grepl("^so", c("so today we", "never so today", "today never so"))
 
 # SUGGESTED PACKAGE to deal with regular expressions: stringr
@@ -285,7 +296,7 @@ library("preText")
 # Example below taken from preText vignette: https://cran.r-project.org/web/packages/preText/vignettes/getting_started_with_preText.html
 
 preprocessed_documents <- factorial_preprocessing(
-  sotu[1:50],
+  sotu,
   use_ngrams = FALSE,
   infrequent_term_threshold = 0.2,
   verbose = FALSE)
@@ -296,7 +307,11 @@ preText_results <- preText(preprocessed_documents,
                            num_comparisons = 20,
                            verbose = FALSE)
 
-preText_score_plot(preText_results)
+preText_score_plot(preText_results) # computing distance between the modified documents
+# looking at how rankings change as the preprocessing decisions are made
+
+# calculate.consine_similarity(as.vector(full_dfm[239,]), as.vector(full_df,[237,]))
+# calculate the consine distance between the speech by trump and obama using the function from session 1
 
 # Questions?
 
